@@ -1,4 +1,4 @@
-# README\n
+# README
 ```
 .
 ├── README.md
@@ -22,5 +22,5 @@
         └── script_3.R
 
 5 directories, 14 files
-```\n
+```
 TEXTO DE TESTE
