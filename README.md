@@ -16,11 +16,20 @@
     ├── data
     │   └── particles.csv
     └── scripts
-        ├── script_0.R
+        ├── 02
+        │   ├── 08
+        │   │   ├── 03
+        │   │   │   └── starting_spark_session.R
+        │   │   └── 04
+        │   │       └── first_steps.R
+        │   └── 09
+        │       └── 01
+        │           └── basic_operations.R
+        ├── 02_011_machine_learning.R
         ├── script_1.R
         ├── script_2.R
         └── script_3.R
 
-5 directories, 14 files
+11 directories, 17 files
 ```
 TEXTO DE TESTE

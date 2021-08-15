@@ -9,3 +9,4 @@
 - https://hadoop.apache.org/docs/r1.2.1/mapred_tutorial.html
 - http://www.dsc.ufcg.edu.br/~jacques/cursos/map/html/frame/oque.htm
 - https://www.ibm.com/analytics/hadoop/mapreduce
+- https://github.com/PacktPublishing/Learning-Spark-SQL
