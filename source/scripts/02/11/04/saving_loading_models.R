@@ -1,36 +1,49 @@
 SPARK_HOME = "D:/Spark"
+
 Sys.setenv(SPARK_HOME=SPARK_HOME)
+
 library(SparkR,
         lib.loc=c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
 
-sparkR.session(master = "local[*]",
-               sparkConfig = list(spark.driver.memory = "4g"))
+sparkR.session(master = "local[3]",
+               sparkConfig = list(spark.driver.memory = "2g"))
+
+# data = read.df(
+#   path = "../../../../data/particles.csv", 
+#   source = "csv",
+#   delimiter = ",",
+#   inferSchema = "true",
+#   header = TRUE
+# )
+
+###################################
 
 data = read.df(
-  path = "../../../data/particles.csv", 
+  path = "../../../../data/used_cars_data.csv", 
   source = "csv",
   delimiter = ",",
   inferSchema = "true",
   header = TRUE
 )
 
-# Preparando o banco de dados
-collect(
-  agg(
-    groupBy(data, 
-            isNull(data$speed),
-            isNull(data$size)),
-    count(data$type)
-    )
-  )
 
+data = filter(data, data$year >= 2018)
+data = drop(data, "description")
+data = drop(data, "main_picture_url")
 
-mean_speed = collect(select(data, avg(data$speed)))[[1]]
-mean_size = collect(select(data, avg(data$size)))[[1]]
+splitted = randomSplit(data, seq(1, 39))
 
-data = fillna(data, list("speed" = mean_speed, 
-                         "size" = mean_size))
+i = 1
+for(df in splitted){
+  file = paste0("../../../../data/cars/used_cars_data_", i, ".csv")
+  df = repartition(df, 1)
+  write.df(df, file, source="csv", header=TRUE)
+  i = i + 1
+}
 
+###################################
+
+# Verificando quantidade de dados faltantes
 collect(
   agg(
     groupBy(data, 
@@ -40,57 +53,27 @@ collect(
   )
 )
 
+# Calculando média para imputação dos dados
+mean_speed = collect(select(data, avg(data$speed)))[[1]]
+mean_size = collect(select(data, avg(data$size)))[[1]]
+
+# Imputando dados faltantes respectivos as suas colunas
+data = fillna(data, list("speed" = mean_speed, 
+                         "size" = mean_size))
+
+# Separação em treino e teste
 df_list = randomSplit(data, c(7,3))
 df_list
-
 
 train = df_list[[1]]
 test = df_list[[2]]
 
-train = data
-
-total_data = collect(
-  agg(data, count(data$type))
-)[[1]]
-
-count_data = collect(
-  agg(
-    groupBy(data, "type"),
-    count(data$type),
-    count(data$type)/total_data)
-)
-
-total_train= collect(
-  agg(data, count(data$type))
-)[[1]]
-
-collect(
-  agg(
-    groupBy(train, "type"),
-    count(train$type),
-    count(train$type)/total_train)
-)
-
-total_test = collect(
-  agg(data, count(data$type))
-)[[1]]
-
-collect(
-  agg(
-    groupBy(test, "type"),
-    count(test$type),
-    count(test$type)/total_test)
-)
-
+# Treinammento do modelo
 model = spark.lm(data = train, size ~ speed)
-results = summary(model)
-
-head(predict(model, test))
-
-results$numFeatures
+summary(model)
 
 predictions = predict(model, train)
-collect(predictions)
+head(predictions)
 
 y_avg = collect(agg(predictions, y_avg = mean(predictions$label)))$y_avg
 
@@ -111,16 +94,5 @@ p = 10
 N = nrow(df)
 aRsq = Rsq - (1 - Rsq)*((p - 1)/(N - p))
 
-
-# # Save and then load a fitted MLlib model
-# model_path = "../models/lm_model_particles"
-# write.ml(model, model_path)
-# model_loaded = read.ml(model_path)
-# 
-# # Check model summary
-# summary(model)
-# summary(model_loaded)
-# 
-# # Check model prediction
-# model_loaded_pred = predict(model_loaded, test)
-# head(model_loaded_pred)
+sprintf("R²: %.5f", Rsq)
+sprintf("R²Ajustado: %.5f", aRsq)
