@@ -4,6 +4,7 @@
 ├── README.md
 ├── paper
 ├── references
+│   ├── README.md
 │   ├── abdul_ghaffar.pdf
 │   ├── christian_pentzold.pdf
 │   ├── jeffrey_dean.pdf
@@ -12,13 +13,12 @@
 │   ├── ripon_patgiri.pdf
 │   ├── salman_salloum.pdf
 │   ├── spolador_rodolfo.pdf
-│   ├── toobigtooignore_not_on_bibtext_yet.pdf
-│   ├── urls.md
 │   ├── wagner_kolberg.pdf
 │   └── xiangrui_meng.pdf
 └── source
     ├── data
-    │   └── particles.csv
+    │   ├── particles.csv
+    │   └── used_cars_data.csv
     ├── images
     │   └── 02
     │       ├── 02
@@ -53,38 +53,40 @@
     │               ├── 04_example-point.png
     │               └── 05_example-bivariate-histogram.png
     └── scripts
-        ├── 02
-        │   ├── 08
-        │   │   ├── 03
-        │   │   │   └── starting_spark_session.R
-        │   │   └── 04
-        │   │       └── first_steps.R
-        │   ├── 09
-        │   │   ├── 01
-        │   │   │   └── basic_operations.R
-        │   │   ├── 02
-        │   │   │   └── selection.R
-        │   │   ├── 03
-        │   │   │   └── filtering.R
-        │   │   ├── 04
-        │   │   │   └── creating_new_columns.R
-        │   │   └── 05
-        │   │       └── using_sql_in_sparkr.R
-        │   ├── 10
-        │   │   ├── 01
-        │   │   │   └── descriptive_statistics.R
-        │   │   ├── 02
-        │   │   │   └── data_visualization.R
-        │   │   └── exploratory_analysis.R
-        │   └── 11
-        │       └── machine_learning_with_sparkr.R
-        └── old
-            ├── outros1.R
-            ├── outros2.R
-            ├── script_1.R
-            ├── script_2.R
-            └── script_3.R
+        └── 02
+            ├── 08
+            │   ├── 03
+            │   │   └── starting_spark_session.R
+            │   └── 04
+            │       └── first_steps.R
+            ├── 09
+            │   ├── 01
+            │   │   └── basic_operations.R
+            │   ├── 02
+            │   │   └── selection.R
+            │   ├── 03
+            │   │   └── filtering.R
+            │   ├── 04
+            │   │   └── creating_new_columns.R
+            │   └── 05
+            │       └── using_sql_in_sparkr.R
+            ├── 10
+            │   ├── 01
+            │   │   └── descriptive_statistics.R
+            │   ├── 02
+            │   │   └── data_visualization.R
+            │   └── exploratory_analysis.R
+            └── 11
+                ├── 01
+                │   └── data_preparation.R
+                ├── 02
+                │   └── model_trainning.R
+                ├── 03
+                │   └── model_evaluation.R
+                └── 04
+                    ├── model
+                    └── saving_loading_models.R
 
-36 directories, 47 files
+40 directories, 45 files
 ```
 TEXTO DE TESTE
