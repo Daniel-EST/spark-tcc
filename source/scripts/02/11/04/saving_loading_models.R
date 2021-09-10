@@ -8,40 +8,13 @@ library(SparkR,
 sparkR.session(master = "local[3]",
                sparkConfig = list(spark.driver.memory = "2g"))
 
-# data = read.df(
-#   path = "../../../../data/particles.csv", 
-#   source = "csv",
-#   delimiter = ",",
-#   inferSchema = "true",
-#   header = TRUE
-# )
-
-###################################
-
 data = read.df(
-  path = "../../../../data/used_cars_data.csv", 
+  path = "../../../../data/particles.csv",
   source = "csv",
   delimiter = ",",
   inferSchema = "true",
   header = TRUE
 )
-
-
-data = filter(data, data$year >= 2018)
-data = drop(data, "description")
-data = drop(data, "main_picture_url")
-
-splitted = randomSplit(data, seq(1, 39))
-
-i = 1
-for(df in splitted){
-  file = paste0("../../../../data/cars/used_cars_data_", i, ".csv")
-  df = repartition(df, 1)
-  write.df(df, file, source="csv", header=TRUE)
-  i = i + 1
-}
-
-###################################
 
 # Verificando quantidade de dados faltantes
 collect(

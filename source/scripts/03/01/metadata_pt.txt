@@ -1,0 +1,41 @@
+vin: Tipo String. Código único de identificação do veículo. Informações: https://www.autocheck.com/vehiclehistory/vin-basics;
+back_legroom: Tipo String. Espaço para as pernas no banco trazeiro;
+bed: TipoString. Category of bed size(open cargo area) in pickup truck. Null usually means the vehicle isn't a pickup truck
+bed_height: Type String. Height of bed in inches
+bed_length: Type String. Length of bed in inches
+body_type: Type String. Body Type of the vehicle. Like Convertible, Hatchback, Sedan, etc.
+cabin: Type String. Category of cabin size(open cargo area) in pickup truck. Eg: Crew Cab, Extended Cab, etc.
+city: Type String. city where the car is listed. Eg: Houston, San Antonio, etc.
+cityfueleconomy: Type Float. Fuel economy in city traffic in km per litre
+combinefueleconomy: Type Float. Combined fuel economy is a weighted average of City and Highway fuel economy in km per litre
+daysonmarket: Type Integer. Days since the vehicle was first listed on the website.
+dealer_zip: Type Integer. Zipcode of the dealer
+description: Type String. Vehicle description on the vehicle's listing page
+engine_cylinders: Type String. The engine configuration. Eg: I4, V6, etc.
+enginedisplacement: Type Float. enginedisplacement is the measure of the cylinder volume swept by all of the pistons of a piston engine, excluding the combustion chambers.
+engine_type: Type String. The engine configuration. Eg: I4, V6, etc.
+exterior_color: Type String. Exterior color of the vehicle, usually a fancy one same as the brochure.
+fleet: Type Boolean. Whether the vehicle was previously part of a fleet.
+frame_damaged: Type Boolean. Whether the vehicle has a damaged frame.
+franchise_dealer: Type Boolean. Whether the dealer is a franchise dealer.
+franchise_make: Type String. The company that owns the franchise.
+front_legroom: Tipo String. Espaço para pernas do banco da frente em polegadas;
+fueltankvolume: Tipo String. Capacidade do tanque de combustível do carro em galões
+fuel_type: Tipo String. Tipo de combustível no qual o carro foi predominantemente abastecido.
+has_accidents: Tipo Boolean. Indica se o carro já se envolveu em algum acidente;
+height: Tipo String. Altura do carro em polegadas
+highwayfueleconomy: Type Float. Economia de combustível em estrada em km/litro
+horsepower: Tipo Float. Cavalos de potência forneciados pelo motor
+interior_color: Tipo String. Cor do interior do veículo
+isCab: Tipo Boolean. Indica se o carro já foi um taxi.;
+is_certified: Tipo Boolean. Indica certificação do carro;
+is_cpo: Tipo Boolean. Carros usados certificados pelo negociador. Ler mais em https://www.cartrade.com/blog/2015/auto-guides/pros-and-cons-of-buying-a-certified-pre-owned-car-1235.html;
+is_new: Tipo Boolean. Indica se o carro foi lançado a menos de 2 anos da data da coleta dos dados;
+is_oemcpo: Tipo Boolean. Identifica se o carro usado é certificado pela fabricante. Mais informações https://www.cargurus.com/Cars/articles/know_the_difference_dealership_cpo_vs_manufacturer_cpo;
+latitude: Tipo Float. Latitude da geolocalização do vendedor;
+length: Tipo String. Largura do carro em polegadas;
+listeddate: Tipo String. Dia no qual o carro foi anunciado no site;
+listing_color: Tipo String. Cor predominante do exterior do carro;
+listing_id: Tipo Integer. Código de identificação único do anúncio do site;
+longitude: Tipo Float. Longitude da geolocalização do vendedor;
+mainpictureurl: Tipo String.  Url que contém a imagem do carro;
