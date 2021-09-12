@@ -8,7 +8,7 @@ library(SparkR,
         lib.loc=c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
 
 sparkR.session(master = "local[*]",
-               sparkConfig = list(spark.driver.memory = "5g"))
+               sparkConfig = list(spark.driver.memory = "1g"))
 
 data = read.df(
   path = "../../../data/used_cars_data.csv",
@@ -20,10 +20,13 @@ data = read.df(
 )
 
 printSchema(data)
+nrow(data)
+ncol(data)
 
 data = drop(data, 
             c("vin",
               "sp_name",
+              "sp_id",
               "daysonmarket",
               "description", 
               "franchise_dealer",
@@ -40,9 +43,17 @@ data = drop(data,
               "interior_color",
               "exterior_color",
               "model_name",
-              "engine_cylinders"))
+              "engine_cylinders",
+              "transmission_display",
+              "wheel_system_display",
+              "savings_amount",
+              "salvage",
+              "theft_title"))
 
-data = filter(data, SparkR::isNotNull(data$price))
+
+data = filter(data, isNotNull(data$price))
+data = filter(data, data$year > 1990 & data$year <= 2021)
+
 
 cols = lapply(columns(data), \(x) alias(count(data[[x]]), x))
 
@@ -74,7 +85,6 @@ data$city_fuel_economy = cast(data$city_fuel_economy, "double")
 data$engine_displacement = cast(data$engine_displacement, "double")
 data$horsepower = cast(data$horsepower, "double")
 data$mileage = cast(data$mileage, "double")
-data$savings_amount = cast(data$savings_amount, "double")
 data$seller_rating = cast(data$seller_rating, "double")
 data$highway_fuel_economy = cast(data$highway_fuel_economy, "double")
 
@@ -95,8 +105,6 @@ data = drop(data, "torque")
 data$year = cast(data$year, "integer")
 data$owner_count = cast(data$owner_count, "integer")
 data$maximum_seating = cast(data$maximum_seating, "integer")
-
-
 
 plot_histogram = function(data, colname, nbins = 32){
   hist = histogram(data, data[[colname]], nbins = nbins)
@@ -125,14 +133,11 @@ for(col in dtypes(data)){
 means = lapply(numeric, \(x) alias(avg(data[[x]]), x))
 means = collect(select(data, means))
 
-
 infinity = lapply(columns(data), \(x) alias(ifelse(lit(data[[x]] == "Inf"), NA, data[[x]]), x))
 data = select(data, infinity)
 
-
 variances = lapply(numeric, \(x) alias(var(data[[x]],  na.rm = FALSE),  x))
 variances = collect(select(data, variances))
-
 
 options(scipen = 999)
 col_hist = c("city_fuel_economy", "highway_fuel_economy", "mileage")
@@ -155,10 +160,10 @@ data = filter(data, isNotNull(data$price))
 data = transform(data, listing_color = ifelse(data$listing_color == "UNKNOWN", NA, data$listing_color))
 
 boxplot_price = collect(
-  agg(groupBy(data, "type"),
-      med = percentile_approx(data$speed, percentage=.5),
-      q1 = percentile_approx(data$speed, percentage=.25),
-      q3 = percentile_approx(data$speed, percentage=.75))
+  agg(data,
+      med = percentile_approx(data$price, percentage=.5),
+      q1 = percentile_approx(data$price, percentage=.25),
+      q3 = percentile_approx(data$price, percentage=.75))
   )
 
 ggplot(boxplot_price,
@@ -215,84 +220,58 @@ pareto = function(dados){
           axis.title.x.bottom = element_blank())
 }
 
-pareto(head(count[[1]], 10))
-data = transform(data, body_type = ifelse(data$body_type %in% count[[1]][1:10, 1], data$body_type, NA))
+pareto(head(count$body_type, 9))
+data = transform(data, body_type = ifelse(data$body_type %in% {{head(count$body_type, 9)[, 1]}}, data$body_type, NA))
 
-city_95 = count[[2]]$city[cumsum(count[[2]]$n)/sum(count[[2]]$n) <= 0.95]
-data = transform(data, city = ifelse(data$city %in% city_95, data$city, "Others"))
+city_95 = count$city$city[cumsum(count$city$n)/sum(count$city$n) <= 0.95]
+data = transform(data, city = ifelse(data$city %in% {{city_95}}, data$city, "Others"))
 
-engine_type_95 = count[[4]]$engine_cylinders[cumsum(count[[4]]$n)/sum(count[[4]]$n) <= 0.95]
-data = transform(data, engine_type = ifelse(data$engine_type_95 %in% engine_type_95, data$engine_type_95, "Others"))
+engine_type_95 = count$engine_type$engine_type[cumsum(count$engine_type$n)/sum(count$engine_type$n) <= 0.95]
+data = transform(data, engine_type = ifelse(data$engine_type %in% {{engine_type_95}}, data$engine_type, "Others"))
 
-pareto(head(count[[4]], 10))
+fuel_type_95 = count$fuel_type$fuel_type[cumsum(count$fuel_type$n)/sum(count$fuel_type$n) <= 0.95]
+data = transform(data, fuel_type = ifelse(data$fuel_type %in% {{fuel_type_95}}, data$fuel_type, "Others"))
+
+listing_color_95 = count$listing_color$listing_color[cumsum(count$listing_color$n)/sum(count$listing_color$n) <= 0.95]
+data = transform(data, listing_color = ifelse(data$listing_color %in% {{listing_color_95}}, data$listing_color, "Others"))
+
+make_name_95 = count$make_name$make_name[cumsum(count$make_name$n)/sum(count$make_name$n) <= 0.95]
+data = transform(data, make_name = ifelse(data$make_name %in% {{make_name_95}}, data$make_name, "Others"))
+
+data = transform(data, transmission = ifelse(data$transmission %in% c("A", "CVT", "M", "Dual Clutch"), data$transmission, NA))
+
+data = transform(data, wheel_system = ifelse(data$wheel_system %in% c("FWD", "AWD", "4WD", "4X2"), data$wheel_system, NA))
+
+data = transform(data, year = ifelse(data$year > 2021, NA, data$year))
+
 data = transform(data, fleet = ifelse(data$fleet %in% c("True", "False"), data$fleet, NA))
+data = transform(data, has_accidents = ifelse(data$has_accidents %in% c("True", "False"), data$has_accidents, NA))
+data = transform(data, isCab = ifelse(data$isCab %in% c("True", "False"), data$isCab, NA))
+data = transform(data, is_new = ifelse(data$is_new %in% c("True", "False"), data$is_new, NA))
 
-
-data = drop(data, data$frame_damage)
-
-fuel_type_95 = count[[7]]$fuel_type[cumsum(count[[7]]$n)/sum(count[[7]]$n) <= 0.95]
-data = transform(data, fuel_type = ifelse(data$fuel_type %in% fuel_type_95, data$has_accidents, NA))
-
-
-pareto(head(count[[8]], 10))
-has_accidents_95 = count[[8]]$has_accidents[cumsum(count[[8]]$n)/sum(count[[8]]$n) <= 0.95]
-data = transform(data, has_accidents = ifelse(data$has_accidents %in% has_accidents_95, data$has_accidents, NA))
-
-
-pareto(head(count[[9]], 10))
-
-pareto(head(count[[10]], 10))
-
-pareto(head(count[[11]], 10))
-pareto(head(count[[12]], 10))
-
-
-ggplot(count[[13]], aes(x = maximum_seating)) +
+ggplot(count$maximum_seating, aes(x = maximum_seating)) +
   geom_bar(aes(y = n), stat = "identity") +
   geom_text(aes(y = n, label = n), stat = "identity") +
   theme_minimal() +
+  scale_x_continuous(limits = c(2, 15)) +
   theme(plot.margin = margin(100, 10, 10, 10, "pt"),
         axis.title.y.left = element_text("Frequência"),
-        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.25),
         axis.title.x.bottom = element_blank())
 
-pareto(head(count[[14]], 10))
-
-count[[15]]
-data = drop(data, data$salvage)
-
-
-pareto(head(count[[16]], 10))
-
-pareto(head(count[[17]], 10)) # Drop
-data = drop(data, data$theft_title)
-
-pareto(head(count[[18]], 10))
-
-pareto(head(count[[19]], 10))
-
-pareto(head(count[[20]], 10))
-
-pareto(head(count[[21]], 10))
-
-
-ggplot(count[[22]], aes(x = year)) +
+ggplot(count$year, aes(x = year)) +
   geom_bar(aes(y = n), stat = "identity") +
-  geom_text(aes(y = n, label = n), stat = "identity", nudge_y = 100000) +
   theme_minimal() +
-  scale_x_continuous(breaks = 2010:2022) +
   theme(plot.margin = margin(100, 10, 10, 10, "pt"),
         axis.title.y.left = element_text("Frequência"),
         axis.title.x.bottom = element_blank())
-
-
-data = transform(data, year = ifelse(data$year > 2021 || data$year < 1970, NA, data$year))
 
 
 most_frequent = lapply(count, \(x) x[1,1]) |> 
   `names<-`(categoric)
 
 data = fillna(data, most_frequent)
+
+data = drop(data, data$frame_damaged)
 
 train_test_split = randomSplit(data, c(75, 25), 20210908)
 
@@ -303,3 +282,23 @@ nrow(train)
 nrow(test)
 
 model = SparkR::spark.svmLinear(train, price ~ .)
+summary(model)
+
+predictions = predict(model, test)
+head(predictions)
+
+y_avg = collect(agg(predictions, avg(predictions$label)))[[1]]
+df = 
+  agg(predictions,
+      sq_res = sum((predictions$label - predictions$prediction)^2), 
+      sq_tot = sum((predictions$label - y_avg)^2)) 
+
+SSR = collect(select(df, df$sq_res))[[1]]
+SST = collect(select(df, df$sq_tot))[[1]]
+
+Rsq = 1 - (SSR/SST)
+sprintf(" R : %.3f", Rsq)
+
+write.ml(model, "./model/svm_cars")
+
+model = read.ml("./model/svm_cars")
