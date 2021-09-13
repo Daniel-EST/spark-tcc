@@ -16,6 +16,7 @@ data = read.df(
   header = TRUE
 )
 
+
 # Verificando quantidade de dados faltantes
 collect(
   agg(
@@ -35,7 +36,7 @@ data = fillna(data, list("speed" = mean_speed,
                          "size" = mean_size))
 
 # Separação em treino e teste
-df_list = randomSplit(data, c(7,3))
+df_list = randomSplit(data, c(7,3), seed = 210828)
 df_list
 
 train = df_list[[1]]
@@ -45,27 +46,39 @@ test = df_list[[2]]
 model = spark.lm(data = train, size ~ speed)
 summary(model)
 
+# Utilizando o modelo para prever os resultados dentro da amostra treino
 predictions = predict(model, train)
 head(predictions)
 
-y_avg = collect(agg(predictions, y_avg = mean(predictions$label)))$y_avg
+# Calculando a média da variável resposta
+y_avg = collect(agg(predictions, avg(predictions$label)))[[1]]
 
-df = transform(predictions, 
-               y_hat = predictions$prediction, 
-               sq_res = (predictions$label - predictions$prediction)^2, 
-               sq_tot = (predictions$label - y_avg)^2, 
-               res = predictions$label - predictions$prediction)
+# Calculando SQ_res e SQ_tot
+df =
+  agg(predictions,
+      sq_res = sum((predictions$label - predictions$prediction)^2),
+      sq_tot = sum((predictions$label - y_avg)^2))
 
-df$prediction = NULL
+SSR = collect(select(df, df$sq_res))[[1]]
+SST = collect(select(df, df$sq_tot))[[1]]
 
-head(select(df, "label", "y_hat", "sq_res", "sq_tot"))
-SSR = collect(agg(df, SSR = sum(df$sq_res)))
-SST = collect(agg(df, SST = sum(df$sq_tot)))
+# Calculando R²
+Rsq = 1 - (SSR/SST)
 
-Rsq = 1-(SSR[[1]]/SST[[1]])
-p = 10
-N = nrow(df)
-aRsq = Rsq - (1 - Rsq)*((p - 1)/(N - p))
+# Obtendo o número de parâmetros do modelo
+p = summary(model)$numFeatures + 1
+
+# Número de observações
+n = nrow(predictions)
+
+# Calculando o R² Ajustado
+aRsq = 1 - (((1 - Rsq)*(n - 1))/(n - p))
 
 sprintf("R²: %.5f", Rsq)
 sprintf("R²Ajustado: %.5f", aRsq)
+
+# Salvando o modelo
+write.ml(model, "./model/lm_particles")
+
+# Carregando o modelo
+model_loaded = read.ml("./model/lm_particles")

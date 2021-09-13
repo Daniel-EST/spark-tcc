@@ -278,10 +278,7 @@ train_test_split = randomSplit(data, c(75, 25), 20210908)
 train = train_test_split[[1]]
 test = train_test_split[[2]]
 
-nrow(train)
-nrow(test)
-
-model = SparkR::spark.svmLinear(train, price ~ .)
+model = spark.decisionTree(data, price ~ .)
 summary(model)
 
 predictions = predict(model, test)

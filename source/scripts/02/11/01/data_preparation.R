@@ -34,10 +34,11 @@ mean_size = collect(select(data, avg(data$size)))[[1]]
 data = fillna(data, list("speed" = mean_speed, 
                          "size" = mean_size))
 
-# Separação em treino e teste
-df_list = randomSplit(data, c(7,3))
+# Gerar lista com os dados de treino e teste
+df_list = randomSplit(data, c(7,3), seed = 210828)
 df_list
 
+# Separar em treino e teste em objetos diferentes
 train = df_list[[1]]
 test = df_list[[2]]
 

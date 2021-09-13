@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.RFormulaModel","timestamp":1631504905437,"sparkVersion":"3.1.2","uid":"rFormula_fd5af51e4b46","paramMap":{"formula":"price ~ ."},"defaultParamMap":{"stringIndexerOrderType":"frequencyDesc","forceIndexLabel":false,"labelCol":"label","handleInvalid":"error","featuresCol":"features"}}
