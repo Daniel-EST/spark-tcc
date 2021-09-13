@@ -1,6 +1,6 @@
 # README
 ## Sobre este repositório
-Este repositório contém todo o material utilizado para a confecção do trabalho final do curso de estatística de Daniel dos Santos na Universidade Federal Fluminense (UFF) sobre a utilização do Spark utilizando a linguagem de programação R em conjunto da API SparkR. O trabalho 
+Este repositório contém todo o material utilizado para a confecção do trabalho final do curso de estatística de Daniel dos Santos na Universidade Federal Fluminense (UFF) sobre a utilização do Spark utilizando a linguagem de programação R em conjunto da API SparkR.
 
 ### Resumo
 Desde o começo da Terceira Revolução Industrial, o volume de dados armazenados cresce exponencialmente, marcando este período como a Era da Informação. A capacidade de explorar tamanha quantidade de dados abre oportunidades para novas formas de análise e descobertas. Com o intuito de realizar tais análises de larga escala foi desenvolvido o Apache Spark, um framework de código aberto que busca democratizar estudos com dados de alta dimensão, utilizando técnicas de computação distribuída já fornecidas  pelo MapReduce, porém com grandes melhorias em performance e praticidade.
