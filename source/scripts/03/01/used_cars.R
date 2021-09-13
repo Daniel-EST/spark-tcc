@@ -106,20 +106,8 @@ data$year = cast(data$year, "integer")
 data$owner_count = cast(data$owner_count, "integer")
 data$maximum_seating = cast(data$maximum_seating, "integer")
 
-plot_histogram = function(data, colname, nbins = 32){
-  hist = histogram(data, data[[colname]], nbins = nbins)
-  
-  p = ggplot(hist, aes(x = centroids, y = counts)) +
-    geom_bar(stat = "identity", col = "black") +
-    ggtitle("") + 
-    xlab(colname) + ylab("Frequência") +
-    theme_minimal()
-  
-  print(p)
-  
-  return(list(colname, hist))
-}
 
+# Seprar variáveis categóricas das numéricas
 categoric = c()
 numeric = c()
 for(col in dtypes(data)){
@@ -133,13 +121,20 @@ for(col in dtypes(data)){
 means = lapply(numeric, \(x) alias(avg(data[[x]]), x))
 means = collect(select(data, means))
 
-infinity = lapply(columns(data), \(x) alias(ifelse(lit(data[[x]] == "Inf"), NA, data[[x]]), x))
-data = select(data, infinity)
-
-variances = lapply(numeric, \(x) alias(var(data[[x]],  na.rm = FALSE),  x))
-variances = collect(select(data, variances))
-
 options(scipen = 999)
+plot_histogram = function(data, colname, nbins = 32){
+  hist = histogram(data, data[[colname]], nbins = nbins)
+  
+  p = ggplot(hist, aes(x = centroids, y = counts)) +
+    geom_bar(stat = "identity", col = "black") +
+    ggtitle("") + 
+    xlab(colname) + ylab("Frequência") +
+    theme_minimal()
+  
+  print(p)
+  
+  return(list(colname, hist))
+}
 col_hist = c("city_fuel_economy", "highway_fuel_economy", "mileage")
 histograms = lapply(col_hist, \(x) plot_histogram(data, x, nbins = 32))
 
@@ -157,7 +152,6 @@ collect(
 
 data = transform(data, price = ifelse(data$price <= 0, NA, data$price))
 data = filter(data, isNotNull(data$price))
-data = transform(data, listing_color = ifelse(data$listing_color == "UNKNOWN", NA, data$listing_color))
 
 boxplot_price = collect(
   agg(data,
@@ -177,11 +171,6 @@ ggplot(boxplot_price,
   ggtitle("Boxplot do Preço") +
   ylab("Preço") + xlab("") +
   theme_minimal() 
-
-medians = lapply(numeric, \(x) alias(percentile_approx(data[[x]], percentage = .5), x))
-medians = collect(select(data, medians))
-
-data = fillna(data, as.list(medians))
 
 count = lapply(categoric, \(x) {
   arrange(
@@ -233,6 +222,7 @@ fuel_type_95 = count$fuel_type$fuel_type[cumsum(count$fuel_type$n)/sum(count$fue
 data = transform(data, fuel_type = ifelse(data$fuel_type %in% {{fuel_type_95}}, data$fuel_type, "Others"))
 
 listing_color_95 = count$listing_color$listing_color[cumsum(count$listing_color$n)/sum(count$listing_color$n) <= 0.95]
+data = transform(data, listing_color = ifelse(data$listing_color == "UNKNOWN", NA, data$listing_color))
 data = transform(data, listing_color = ifelse(data$listing_color %in% {{listing_color_95}}, data$listing_color, "Others"))
 
 make_name_95 = count$make_name$make_name[cumsum(count$make_name$n)/sum(count$make_name$n) <= 0.95]
@@ -249,27 +239,16 @@ data = transform(data, has_accidents = ifelse(data$has_accidents %in% c("True", 
 data = transform(data, isCab = ifelse(data$isCab %in% c("True", "False"), data$isCab, NA))
 data = transform(data, is_new = ifelse(data$is_new %in% c("True", "False"), data$is_new, NA))
 
-ggplot(count$maximum_seating, aes(x = maximum_seating)) +
-  geom_bar(aes(y = n), stat = "identity") +
-  geom_text(aes(y = n, label = n), stat = "identity") +
-  theme_minimal() +
-  scale_x_continuous(limits = c(2, 15)) +
-  theme(plot.margin = margin(100, 10, 10, 10, "pt"),
-        axis.title.y.left = element_text("Frequência"),
-        axis.title.x.bottom = element_blank())
-
-ggplot(count$year, aes(x = year)) +
-  geom_bar(aes(y = n), stat = "identity") +
-  theme_minimal() +
-  theme(plot.margin = margin(100, 10, 10, 10, "pt"),
-        axis.title.y.left = element_text("Frequência"),
-        axis.title.x.bottom = element_blank())
-
 
 most_frequent = lapply(count, \(x) x[1,1]) |> 
   `names<-`(categoric)
 
 data = fillna(data, most_frequent)
+
+medians = lapply(numeric, \(x) alias(percentile_approx(data[[x]], percentage = .5), x))
+medians = collect(select(data, medians))
+
+data = fillna(data, as.list(medians))
 
 data = drop(data, data$frame_damaged)
 
@@ -278,8 +257,7 @@ train_test_split = randomSplit(data, c(75, 25), 20210908)
 train = train_test_split[[1]]
 test = train_test_split[[2]]
 
-model = spark.decisionTree(data, price ~ .)
-summary(model)
+model = spark.decisionTree(train, price ~ .)
 
 predictions = predict(model, test)
 head(predictions)
@@ -294,8 +272,6 @@ SSR = collect(select(df, df$sq_res))[[1]]
 SST = collect(select(df, df$sq_tot))[[1]]
 
 Rsq = 1 - (SSR/SST)
-sprintf(" R : %.3f", Rsq)
+sprintf("R²: %.3f", Rsq)
 
-write.ml(model, "./model/svm_cars")
-
-model = read.ml("./model/svm_cars")
+write.ml(model, "./model/decisionTree_cars")
